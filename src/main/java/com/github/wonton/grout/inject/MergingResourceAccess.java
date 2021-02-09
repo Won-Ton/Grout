@@ -1,7 +1,7 @@
-package com.github.wonton.grout.codec;
+package com.github.wonton.grout.inject;
 
 import com.github.wonton.grout.Grout;
-import com.github.wonton.grout.inject.RegistryEntryInjector;
+import com.github.wonton.grout.Injectors;
 import com.google.gson.*;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.DataResult;
@@ -24,13 +24,18 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-public class InjectorResourceAccess implements WorldSettingsImport.IResourceAccess {
+public class MergingResourceAccess implements WorldSettingsImport.IResourceAccess {
 
     private final IResourceManager manager;
     private final JsonParser parser = new JsonParser();
 
-    public InjectorResourceAccess(IResourceManager manager) {
+    public MergingResourceAccess(IResourceManager manager) {
         this.manager = manager;
+    }
+
+    @Override
+    public String toString() {
+        return "RegistryInjectorResourceAccess[" + manager + "]";
     }
 
     @Override
@@ -42,7 +47,7 @@ public class InjectorResourceAccess implements WorldSettingsImport.IResourceAcce
     public <E> DataResult<Pair<E, OptionalInt>> decode(DynamicOps<JsonElement> ops, RegistryKey<? extends Registry<E>> registryKey, RegistryKey<E> entryKey, Decoder<E> decoder) {
         final ResourceLocation entryName = entryKey.getLocation();
         final ResourceLocation entryPath = toJsonPath(registryKey, entryName);
-        final RegistryEntryInjector<?, ?> injector = RegistryEntryInjector.getInjector(registryKey);
+        final RegistryEntryInjector<?> injector = RegistryEntryInjector.getInjector(registryKey);
 
         try {
             final JsonElement result = loadJson(entryKey, entryPath, injector);
@@ -57,45 +62,43 @@ public class InjectorResourceAccess implements WorldSettingsImport.IResourceAcce
         }
     }
 
-    @Override
-    public String toString() {
-        return "InjectorResourceAccess[" + manager + "]";
-    }
-
-    private JsonElement loadJson(RegistryKey<?> entryKey, ResourceLocation entryPath, @Nullable RegistryEntryInjector<?, ?> injector) throws IOException {
+    private JsonElement loadJson(RegistryKey<?> entryKey, ResourceLocation entryPath, @Nullable RegistryEntryInjector<?> injector) throws IOException {
         if (injector == null) {
-            return loadOne(entryPath);
+            // No injector for this registry type so load the 'top' DataPack entry as normal.
+            try (IResource resource = manager.getResource(entryPath); Reader reader = newReader(resource)) {
+                return parser.parse(reader);
+            }
         }
-
-        return loadAll(entryKey, entryPath, injector);
+        return loadAndMerge(entryKey, entryPath, injector);
     }
 
-    private JsonElement loadOne(ResourceLocation entryPath) throws IOException {
-        try (IResource resource = manager.getResource(entryPath); Reader reader = newReader(resource)) {
-            return parser.parse(reader);
-        }
-    }
-
-    private JsonElement loadAll(RegistryKey<?> entryKey, ResourceLocation entryPath, RegistryEntryInjector<?, ?> injector) throws IOException {
-        final BinaryOperator<JsonElement> merger = injector.getEntryMerger();
-        final Function<JsonElement, Stream<JsonElement>> mapper = injector.getEntryMapper();
+    private JsonElement loadAndMerge(RegistryKey<?> entryKey, ResourceLocation entryPath, RegistryEntryInjector<?> injector) throws IOException {
+        // Get all DataPack entries for the resource rather than just the 'top' one.
         final Collection<IResource> resources = manager.getAllResources(entryPath);
-
         if (resources.size() > 1) {
-            Grout.LOG.debug("Merging datapack registry entry: {}", entryKey);
+            Grout.LOG.debug("Merging datapack entries for: {}", entryKey);
         }
 
+        // Functions for merging this type of json.
+        final BinaryOperator<JsonElement> merger = injector.getMerger();
+        final Function<JsonElement, Stream<JsonElement>> mapper = injector.getMapper();
+
+        // Merge DataPack registry entries first.
         JsonElement result = JsonNull.INSTANCE;
         for (IResource resource : resources) {
             try (Closeable ignored = resource; Reader reader = newReader(resource)) {
                 JsonElement json = parser.parse(reader);
-
                 if (result.isJsonNull()) {
                     result = json;
                 } else {
                     result = mapper.apply(json).reduce(result, merger);
                 }
             }
+        }
+
+        if (!result.isJsonNull() && injector.hasChildren(entryKey)) {
+            Grout.LOG.debug("Merging registered entries for: {}", entryKey);
+            result = injector.injectChildren(entryKey, result);
         }
 
         return result;
@@ -110,10 +113,5 @@ public class InjectorResourceAccess implements WorldSettingsImport.IResourceAcce
 
     private static Reader newReader(IResource resource) {
         return new InputStreamReader(new BufferedInputStream(resource.getInputStream()), StandardCharsets.UTF_8);
-    }
-
-    public static <T> WorldSettingsImport<T> createSettingsImport(DynamicOps<T> ops, IResourceManager resourceManager, DynamicRegistries.Impl dynamicRegistries) {
-        InjectorResourceAccess access = new InjectorResourceAccess(resourceManager);
-        return WorldSettingsImport.create(ops, access, dynamicRegistries);
     }
 }

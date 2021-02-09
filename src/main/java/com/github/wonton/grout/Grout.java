@@ -1,10 +1,11 @@
 package com.github.wonton.grout;
 
-import com.github.wonton.grout.inject.RegistryInjectors;
-import net.minecraft.util.registry.WorldGenRegistries;
+import com.github.wonton.grout.inject.MergingResourceAccess;
+import com.mojang.serialization.DynamicOps;
+import net.minecraft.resources.IResourceManager;
+import net.minecraft.util.registry.DynamicRegistries;
+import net.minecraft.util.registry.WorldSettingsImport;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,16 +14,14 @@ public class Grout {
 
     public static final Logger LOG = LogManager.getLogger("Grout");
 
-    public Grout() {
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::loadComplete);
-    }
+    public static <T> WorldSettingsImport<T> createSettingsImport(DynamicOps<T> ops, IResourceManager resourceManager, DynamicRegistries.Impl dynamicRegistries) {
+        // Make sure injectors have up-to-date info
+        Injectors.reload();
 
-    public void loadComplete(FMLLoadCompleteEvent event) {
-        event.enqueueWork(Grout::reload);
-    }
+        // Our IResourceAccess handles merging the json
+        MergingResourceAccess access = new MergingResourceAccess(resourceManager);
 
-    public static void reload() {
-        LOG.info("Registering structure separation injections...");
-        RegistryInjectors.getSeparationSettings().registerAll(WorldGenRegistries.NOISE_SETTINGS);
+        // A useful method that Mojang didn't make private, nice!
+        return WorldSettingsImport.create(ops, access, dynamicRegistries);
     }
 }
