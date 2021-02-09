@@ -15,6 +15,10 @@ import net.minecraft.world.gen.settings.StructureSeparationSettings;
 import java.util.Map;
 import java.util.function.Predicate;
 
+/**
+ * A DimensionSettings Injector that targets the StructureSeparationSettings map stored on:
+ * > DimensionSettings >> DimensionStructureSettings >> Map<Structure<?>, StructureSeparationSettings>
+ */
 public final class StructureSeparationInjector implements Injector<DimensionSettings> {
 
     public static final StructureSeparationInjector ALL = new StructureSeparationInjector(name -> true);

@@ -80,7 +80,7 @@ public final class GroutResourceAccess implements WorldSettingsImport.IResourceA
         }
 
         if (config.injectDefaults && result != null && result.isJsonObject() && injector.hasInjections()) {
-            Grout.LOG.debug("Injecting registry defaults for: {}", entryKey);
+            Grout.LOG.debug("Merging registry defaults for: {}", entryKey);
             injector.injectRaw(entryKey, result.getAsJsonObject());
         }
 
