@@ -39,10 +39,7 @@ public class InjectorResourceAccess implements WorldSettingsImport.IResourceAcce
     }
 
     @Override
-    public <E> DataResult<Pair<E, OptionalInt>> decode(DynamicOps<JsonElement> ops,
-                                                       RegistryKey<? extends Registry<E>> registryKey,
-                                                       RegistryKey<E> entryKey,
-                                                       Decoder<E> decoder) {
+    public <E> DataResult<Pair<E, OptionalInt>> decode(DynamicOps<JsonElement> ops, RegistryKey<? extends Registry<E>> registryKey, RegistryKey<E> entryKey, Decoder<E> decoder) {
 
         final ResourceLocation entryName = entryKey.getLocation();
         final ResourceLocation entryPath = toJsonPath(registryKey, entryName);
@@ -117,9 +114,7 @@ public class InjectorResourceAccess implements WorldSettingsImport.IResourceAcce
         return new InputStreamReader(new BufferedInputStream(resource.getInputStream()), StandardCharsets.UTF_8);
     }
 
-    public static <T> WorldSettingsImport<T> createSettingsImport(DynamicOps<T> ops,
-                                                                  IResourceManager resourceManager,
-                                                                  DynamicRegistries.Impl dynamicRegistries) {
+    public static <T> WorldSettingsImport<T> createSettingsImport(DynamicOps<T> ops, IResourceManager resourceManager, DynamicRegistries.Impl dynamicRegistries) {
         InjectorResourceAccess access = new InjectorResourceAccess(resourceManager);
         return WorldSettingsImport.create(ops, access, dynamicRegistries);
     }

@@ -30,10 +30,7 @@ public class RegistryEntryInjector<E, V> {
 
     private final Map<RegistryKey<E>, Collection<JsonElement>> children = new IdentityHashMap<>();
 
-    public RegistryEntryInjector(RegistryKey<Registry<E>> registryKey,
-                                 Codec<E> elementCodec, Codec<V> childCodec,
-                                 BinaryOperator<JsonElement> entryMerger,
-                                 Function<JsonElement, Stream<JsonElement>> entryMapper) {
+    public RegistryEntryInjector(RegistryKey<Registry<E>> registryKey, Codec<E> elementCodec, Codec<V> childCodec, BinaryOperator<JsonElement> entryMerger, Function<JsonElement, Stream<JsonElement>> entryMapper) {
         this.registryKey = registryKey;
         this.entryCodec = elementCodec;
         this.childCodec = childCodec;
