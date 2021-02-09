@@ -15,7 +15,6 @@ public class MixinWorldSettingsImport {
 
     @Inject(method = "create", at = @At("HEAD"), cancellable = true)
     private static <T> void onCreate(DynamicOps<T> ops, IResourceManager resources, DynamicRegistries.Impl registries, CallbackInfoReturnable<WorldSettingsImport<T>> cir) {
-        // Inject our own IResourceAccess that handles merging of the datapack json + registered entries
-        cir.setReturnValue(Grout.createSettingsImport(ops, resources, registries));
+        cir.setReturnValue(WorldSettingsImport.create(ops, Grout.createResourceAccess(resources), registries));
     }
 }
