@@ -12,14 +12,14 @@ public interface Injector<E> {
      *
      * @param key           The RegistryKey of the registry entry.
      * @param registryEntry The json data for the registry entry.
-     * @throws InjectionException When invalid json data is passed into the merge function.
+     * @throws InjectionException When invalid json data is passed into the inject function.
      */
     void inject(RegistryKey<E> key, JsonObject registryEntry) throws InjectionException;
 
     /**
-     * Insert data from the 'src' registry entry that isn't already contained in the 'dest' registry entry.
+     * Insert data from the 'src' registry entry that isn't already present in the 'dest' registry entry.
      *
-     * @param registryEntryDest The registryEntry to add missing data to.
+     * @param registryEntryDest The registry entry to add missing data to.
      * @param registryEntrySrc  The registry entry to add missing data from.
      * @throws InjectionException When invalid json data is passed into the merge function.
      */

@@ -8,6 +8,15 @@ import net.minecraft.util.registry.Registry;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * An Injector that targets registry entries of the type E.
+ * This class delegates to a list of child injectors that target different areas of the registry entry's data.
+ *
+ * RegistryEntryInjector's are created exclusively with the provided Builder {@link RegistryEntryInjector.Builder}
+ * obtained via the {@link RegistryEntryInjector#builder(RegistryKey)} method.
+ *
+ * @param <E> The registry entry type.
+ */
 public final class RegistryEntryInjector<E> implements Injector<E> {
 
     private final RegistryKey<Registry<E>> registryKey;
@@ -50,7 +59,7 @@ public final class RegistryEntryInjector<E> implements Injector<E> {
     }
 
     public static <E> Builder<E> builder(RegistryKey<Registry<E>> registryKey) {
-        return new Builder<E>(registryKey);
+        return new Builder<>(registryKey);
     }
 
     public static class Builder<E> {
