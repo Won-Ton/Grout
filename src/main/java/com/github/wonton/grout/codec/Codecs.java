@@ -1,6 +1,8 @@
 package com.github.wonton.grout.codec;
 
+import com.google.common.base.Preconditions;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
@@ -10,6 +12,7 @@ import net.minecraft.world.gen.feature.jigsaw.JigsawPattern;
 import net.minecraft.world.gen.feature.jigsaw.JigsawPiece;
 import net.minecraft.world.gen.settings.StructureSeparationSettings;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class Codecs {
@@ -32,5 +35,20 @@ public class Codecs {
 
     public static <E> void decode(JsonElement json, Codec<E> codec, Consumer<E> consumer) {
         codec.decode(JsonOps.INSTANCE, json).map(Pair::getFirst).result().ifPresent(consumer);
+    }
+
+    public static JsonElement get(JsonElement owner, String key, String type) {
+        Preconditions.checkState(owner.isJsonObject(), "Parent is not a JsonObject!");
+
+        JsonElement result = owner.getAsJsonObject().get(key);
+        Objects.requireNonNull(result, type);
+
+        return result;
+    }
+
+    public static JsonObject getObject(JsonElement owner, String key, String type) {
+        JsonElement result = get(owner, key, type);
+        Preconditions.checkState(result.isJsonObject(), type + " is not a JsonObject!");
+        return result.getAsJsonObject();
     }
 }

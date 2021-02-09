@@ -1,10 +1,12 @@
 package com.github.wonton.grout.inject;
 
 import com.github.wonton.grout.Grout;
+import com.github.wonton.grout.codec.Codecs;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import java.util.Objects;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -17,35 +19,34 @@ public class RegistryEntryMergers {
     public static final Function<JsonElement, Stream<JsonElement>> SEPARATION_SETTING_MAPPER = RegistryEntryMergers::streamSeparationSettings;
     public static final Function<JsonElement, Stream<JsonElement>> JIGSAW_POOL_ENTRY_MAPPER = RegistryEntryMergers::streamJigsawPoolEntries;
 
-    private static JsonElement injectSeparationSetting(JsonElement root, JsonElement entry) {
-        if (!root.isJsonObject() || !entry.isJsonObject()) {
-            return root;
+    private static JsonElement injectSeparationSetting(JsonElement parent, JsonElement child) {
+        if (!parent.isJsonObject() || !child.isJsonObject()) {
+            return parent;
         }
 
-        final JsonObject structureSeparations = root.getAsJsonObject()
-                .getAsJsonObject("structures")  // DimensionStructuresSettings
-                .getAsJsonObject("structures"); // Map<Structure<?>, StructureSeparationSettings>
+        JsonElement name = Codecs.get(child, "name", "structure name");
+        JsonElement setting = Codecs.get(child, "settings", "separation setting");
+        JsonObject separationSettings = getSeparationSettings(parent.getAsJsonObject());
 
-        final String name = entry.getAsJsonObject().get("name").getAsString();
-        final JsonElement setting = entry.getAsJsonObject().get("settings");
-
-        if (!structureSeparations.has(name)) {
-            structureSeparations.add(name, setting);
-            Grout.LOG.debug(" - Injected separation settings for structure: {}", name);
+        if (!separationSettings.has(name.getAsString())) {
+            separationSettings.add(name.getAsString(), setting);
+            Grout.LOG.debug(" - Injected separation settings for structure: {}", name.getAsString());
         }
 
-        return root;
+        return parent;
     }
 
-    private static JsonElement injectJigsawPoolEntry(JsonElement root, JsonElement entry) {
-        if (!root.isJsonObject() || !entry.isJsonObject()) {
-            return root;
+    private static JsonElement injectJigsawPoolEntry(JsonElement parent, JsonElement child) {
+        if (!parent.isJsonObject() || !child.isJsonObject()) {
+            return parent;
         }
 
-        final JsonArray rootElements = root.getAsJsonObject().getAsJsonArray("elements");
-        rootElements.add(entry);
+        final JsonArray rootElements = parent.getAsJsonObject().getAsJsonArray("elements");
+        Objects.requireNonNull(rootElements, "elements");
 
-        return root;
+        rootElements.add(child);
+
+        return parent;
     }
 
     private static Stream<JsonElement> streamSeparationSettings(JsonElement entry) {
@@ -53,11 +54,9 @@ public class RegistryEntryMergers {
             return Stream.empty();
         }
 
-        final JsonObject structures = entry.getAsJsonObject()
-                .getAsJsonObject("structures")  // DimensionStructuresSettings
-                .getAsJsonObject("structures");
+        JsonObject separationSettings = getSeparationSettings(entry.getAsJsonObject());
 
-        return structures.entrySet().stream().map(e -> {
+        return separationSettings.entrySet().stream().map(e -> {
             JsonObject pair = new JsonObject();
             pair.addProperty("name", e.getKey());
             pair.add("settings", e.getValue());
@@ -67,5 +66,10 @@ public class RegistryEntryMergers {
 
     private static Stream<JsonElement> streamJigsawPoolEntries(JsonElement json) {
         return Stream.empty();
+    }
+
+    private static JsonObject getSeparationSettings(JsonElement parent) {
+        JsonObject structureSettings = Codecs.getObject(parent, "structures", "structure settings");
+        return Codecs.getObject(structureSettings, "structures", "separation settings");
     }
 }

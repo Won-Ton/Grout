@@ -40,7 +40,6 @@ public class InjectorResourceAccess implements WorldSettingsImport.IResourceAcce
 
     @Override
     public <E> DataResult<Pair<E, OptionalInt>> decode(DynamicOps<JsonElement> ops, RegistryKey<? extends Registry<E>> registryKey, RegistryKey<E> entryKey, Decoder<E> decoder) {
-
         final ResourceLocation entryName = entryKey.getLocation();
         final ResourceLocation entryPath = toJsonPath(registryKey, entryName);
         final RegistryEntryInjector<?, ?> injector = RegistryEntryInjector.getInjector(registryKey);
@@ -67,6 +66,7 @@ public class InjectorResourceAccess implements WorldSettingsImport.IResourceAcce
         if (injector == null) {
             return loadOne(entryPath);
         }
+
         return loadAll(entryKey, entryPath, injector);
     }
 
