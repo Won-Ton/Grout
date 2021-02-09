@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "compatibilityLevel": "JAVA_8",
+  "package": "com.github.wonton.grout.mixin",
+  "refmap": "mixin.grout.refmap.json",
+  "mixins": ["MixinWorldSettingsImport"]
+}

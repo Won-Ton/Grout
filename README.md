@@ -1,2 +1,2 @@
 # Grout
-Holds structure mods together :)
+Holding structure mods & datapacks together!

@@ -1,0 +1,103 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        maven { url "https://repo.spongepowered.org/maven" }
+        maven { url "https://files.minecraftforge.net/maven" }
+    }
+    dependencies {
+        classpath group: "org.spongepowered", name: "mixingradle", version: "0.7-SNAPSHOT", changing: true
+        classpath group: "net.minecraftforge.gradle", name: "ForgeGradle", version: "3.+", changing: true
+    }
+}
+
+apply plugin: "net.minecraftforge.gradle"
+apply plugin: "org.spongepowered.mixin"
+apply plugin: "maven-publish"
+apply plugin: "eclipse"
+apply plugin: "java"
+
+group = "com.github.wonton"
+version = "${minecraft_version}-${mod_version}"
+sourceCompatibility = targetCompatibility = JavaVersion.VERSION_1_8
+
+repositories {
+    maven { url "https://www.dogforce-games.com/maven/" }
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+}
+
+mixin {
+    add sourceSets.main, "mixin.grout.refmap.json"
+}
+
+minecraft {
+    mappings channel: mcp_channel, version: mcp_version
+    runs {
+        client {
+            workingDirectory project.file("run/client")
+            property "forge.logging.markers", "SCAN,REGISTRIES,REGISTRYDUMP"
+            property "forge.logging.console.level", "debug"
+            jvmArgs "-Xmx8G", "-Xms6G", "-Ddev", "-Dfml.earlyprogresswindow=false"
+            arg "-mixin.config=mixin.grout.json"
+            mods {
+                grout {
+                    source sourceSets.main
+                }
+            }
+        }
+        server {
+            workingDirectory project.file("run/server")
+            property "forge.logging.markers", "SCAN,REGISTRIES,REGISTRYDUMP"
+            property "forge.logging.console.level", "debug"
+            jvmArgs "-Xmx8G", "-Xms6G", "-Ddev", "-DvanillaBiomes"
+            arg "-mixin.config=mixin.grout.json"
+            mods {
+                grout {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
+
+processResources {
+    filesMatching("**/mods.toml") {
+        // replaces the version string in the mods.toml
+        expand("version": "${mod_version}", "mc_version": minecraft_version)
+    }
+}
+
+jar {
+    manifest {
+        attributes([
+                "Specification-Title": "Won-Ton",
+                "Specification-Vendor": "Won-Ton",
+                "Specification-Version": "1",
+                "Implementation-Title": project.name,
+                "Implementation-Version": "${version}",
+                "Implementation-Vendor" :"Won-Ton",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                "MixinConfigs": "mixin.grout.json"
+        ])
+    }
+}
+
+import net.minecraftforge.gradle.common.task.SignJar
+task signJar(type: SignJar, dependsOn: "reobfJar") {
+    onlyIf { project.hasProperty("signing.keystore.path") }
+    keyStore = project.findProperty("signing.keystore.path")
+    storePass = project.findProperty("signing.keystore.pass")
+    alias = project.findProperty("signing.key.name")
+    keyPass = project.findProperty("signing.key.pass")
+    inputFile = jar.archivePath
+    outputFile = jar.archivePath
+}
+
+build {
+    dependsOn("signJar")
+}

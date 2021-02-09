@@ -1,0 +1,20 @@
+modLoader="javafml"
+license="MIT"
+loaderVersion="[35.1,)"
+
+[[mods]]
+modId="grout"
+displayName="Grout"
+version="${version}"
+authors="Won-Ton"
+credits="Won-Ton"
+description='''
+Description:
+ Holding structure mods & datapacks together!
+'''
+
+[[dependencies.grout]]
+    modId="forge"
+    side="BOTH"
+    mandatory=true
+    versionRange="[35.1.5,)"
