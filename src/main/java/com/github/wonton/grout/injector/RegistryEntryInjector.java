@@ -8,10 +8,10 @@ import net.minecraft.util.registry.Registry;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RegistryEntryInjector<E> implements Injector<E> {
+public final class RegistryEntryInjector<E> implements Injector<E> {
 
-    private final List<Injector<E>> injectors;
     private final RegistryKey<Registry<E>> registryKey;
+    private final List<Injector<E>> injectors;
 
     private RegistryEntryInjector(Builder<E> builder) {
         this.registryKey = builder.registryKey;
@@ -41,8 +41,16 @@ public class RegistryEntryInjector<E> implements Injector<E> {
         }
     }
 
+    @Override
+    public String toString() {
+        return "RegistryEntryInjector{" +
+                "registryKey=" + registryKey +
+                ", injectors=" + injectors +
+                '}';
+    }
+
     public static <E> Builder<E> builder(RegistryKey<Registry<E>> registryKey) {
-        return new Builder<E>(registryKey) {};
+        return new Builder<E>(registryKey);
     }
 
     public static class Builder<E> {
@@ -60,7 +68,7 @@ public class RegistryEntryInjector<E> implements Injector<E> {
         }
 
         public RegistryEntryInjector<E> build() {
-            return new RegistryEntryInjector<E>(this) {};
+            return new RegistryEntryInjector<E>(this);
         }
     }
 }

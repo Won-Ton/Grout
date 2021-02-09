@@ -6,7 +6,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public final class InjectorUtils {
 
@@ -16,10 +15,6 @@ public final class InjectorUtils {
 
     public static <T> Optional<JsonElement> encode(T value, Codec<T> codec) {
         return codec.encodeStart(JsonOps.INSTANCE, value).result();
-    }
-
-    public static <T> void encode(T value, Codec<T> codec, Consumer<JsonElement> consumer) {
-        encode(value, codec).ifPresent(consumer);
     }
 
     public static JsonElement get(JsonObject object, String key) throws Injector.InjectionException {

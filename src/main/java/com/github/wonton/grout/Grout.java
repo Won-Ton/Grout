@@ -31,7 +31,7 @@ public class Grout {
 
         builder.put(Registry.NOISE_SETTINGS_KEY, RegistryEntryInjector.builder(Registry.NOISE_SETTINGS_KEY)
                 // TODO: Make filter choice user-configurable
-                .add(new StructureSeparationInjector(StructureSeparationInjector.NOT_VANILLA))
+                .add(StructureSeparationInjector.ALL)
                 .build());
 
         return builder.build();

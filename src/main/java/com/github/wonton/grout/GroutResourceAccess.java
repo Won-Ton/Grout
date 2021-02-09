@@ -15,13 +15,17 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.WorldSettingsImport;
 
 import javax.annotation.Nullable;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
 
-public class GroutResourceAccess implements WorldSettingsImport.IResourceAccess {
+public final class GroutResourceAccess implements WorldSettingsImport.IResourceAccess {
 
     private static final JsonParser JSON_PARSER = new JsonParser();
 
@@ -29,7 +33,7 @@ public class GroutResourceAccess implements WorldSettingsImport.IResourceAccess 
     private final IResourceManager resourceManager;
     private final Map<RegistryKey<? extends Registry<?>>, RegistryEntryInjector<?>> injectors;
 
-    public GroutResourceAccess(IResourceManager resourceManager, GroutConfig config, Map<RegistryKey<? extends Registry<?>>, RegistryEntryInjector<?>> injectors) {
+    GroutResourceAccess(IResourceManager resourceManager, GroutConfig config, Map<RegistryKey<? extends Registry<?>>, RegistryEntryInjector<?>> injectors) {
         this.resourceManager = resourceManager;
         this.injectors = injectors;
         this.config = config;
@@ -92,19 +96,19 @@ public class GroutResourceAccess implements WorldSettingsImport.IResourceAccess 
 
     private JsonElement loadAll(RegistryKey<?> entryKey, ResourceLocation file, RegistryEntryInjector<?> injector) throws IOException {
         // Merging behaviour: load the entry json from each DataPack that contains data for it.
-        Collection<IResource> resources = resourceManager.getAllResources(file);
+        List<IResource> resources = resourceManager.getAllResources(file);
         if (resources.size() > 1) {
             Grout.LOG.debug("Merging datapack entries for: {}", entryKey);
         }
 
-        // Visit each resource in order applying our merge operation(s).
         JsonElement result = null;
-        for (IResource resource : resources) {
-            try (Closeable ignored = resource; Reader reader = newReader(resource)) {
+        // Iterate resources in reverse order adding missing data without overwriting existing.
+        for (int index = resources.size() - 1; index >= 0; index--) {
+            try (IResource resource = resources.get(index); Reader reader = newReader(resource)) {
                 JsonElement json = JSON_PARSER.parse(reader);
 
                 if (result == null) {
-                    // Nothing to merge if first value.
+                    // Nothing to merge if first value!
                     result = json;
                 } else if (result.isJsonObject() && json.isJsonObject()) {
                     injector.merge(result.getAsJsonObject(), json.getAsJsonObject());

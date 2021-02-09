@@ -1,8 +1,8 @@
 package com.github.wonton.grout.impl;
 
 import com.github.wonton.grout.Grout;
-import com.github.wonton.grout.injector.InjectorUtils;
 import com.github.wonton.grout.injector.Injector;
+import com.github.wonton.grout.injector.InjectorUtils;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.RegistryKey;
@@ -15,14 +15,15 @@ import net.minecraft.world.gen.settings.StructureSeparationSettings;
 import java.util.Map;
 import java.util.function.Predicate;
 
-public class StructureSeparationInjector implements Injector<DimensionSettings> {
+public final class StructureSeparationInjector implements Injector<DimensionSettings> {
 
-    public static final Predicate<ResourceLocation> ALL = rl -> true;
-    public static final Predicate<ResourceLocation> NOT_VANILLA = rl -> !rl.getNamespace().equals("minecraft");
+    public static final StructureSeparationInjector ALL = new StructureSeparationInjector(name -> true);
+    public static final StructureSeparationInjector VANILLA = new StructureSeparationInjector(name -> name.getNamespace().equals("minecraft"));
+    public static final StructureSeparationInjector NON_VANILLA = new StructureSeparationInjector(name -> !name.getNamespace().equals("minecraft"));
 
     private final Predicate<ResourceLocation> filter;
 
-    public StructureSeparationInjector(Predicate<ResourceLocation> filter) {
+    private StructureSeparationInjector(Predicate<ResourceLocation> filter) {
         this.filter = filter;
     }
 
@@ -66,6 +67,11 @@ public class StructureSeparationInjector implements Injector<DimensionSettings> 
                 separationSettingsJsonDest.add(entry.getKey(), entry.getValue());
             }
         }
+    }
+
+    @Override
+    public String toString() {
+        return "StructureSeparationInjector{}";
     }
 
     protected static JsonObject getSeparationSettingsJson(JsonObject registryEntryJson) throws InjectionException {
