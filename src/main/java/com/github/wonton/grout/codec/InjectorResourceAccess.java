@@ -71,10 +71,8 @@ public class InjectorResourceAccess implements WorldSettingsImport.IResourceAcce
     }
 
     private JsonElement loadOne(ResourceLocation entryPath) throws IOException {
-        try (IResource resource = manager.getResource(entryPath)) {
-            try (Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)) {
-                return parser.parse(reader);
-            }
+        try (IResource resource = manager.getResource(entryPath); Reader reader = newReader(resource)) {
+            return parser.parse(reader);
         }
     }
 
